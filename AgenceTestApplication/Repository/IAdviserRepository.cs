@@ -8,8 +8,8 @@ namespace AgenceTestApplication.Repository
 {
     public interface IAdviserRepository
     {
-        Task<List<string>> GetAdvisers();
+        List<AdviserDto> GetAdvisers();
 
-        Task<List<AdviserSummaryDto>> SummaryAdvisers(List<string> advisers, DateTime inicio, DateTime fin);
+        List<AdviserSummaryDto> SummaryAdvisers(List<string> advisers, DateTime inicio, DateTime fin);
     }
 }

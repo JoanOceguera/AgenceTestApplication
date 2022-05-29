@@ -10,6 +10,9 @@ namespace AgenceTestApplication.Models.Dto
         // Representa el código del consultor
         public string co_consultor { get; set; }
 
+        // Representa el nombre del consultor
+        public string no_usuario { get; set; }
+
         // Una lista que representa en un diccionario los meses y la sumatoria de todas las facturas del consultor en ese mes (ganancias netas, es decir
         // despúes de impuestos)
         public Dictionary<DateTime, float> operationsSummary { get; set; }
