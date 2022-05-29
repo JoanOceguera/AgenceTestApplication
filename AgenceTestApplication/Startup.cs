@@ -1,7 +1,10 @@
+using AgenceTestApplication.Data;
+using AgenceTestApplication.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -16,6 +19,7 @@ namespace AgenceTestApplication
 {
     public class Startup
     {
+        
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -23,9 +27,24 @@ namespace AgenceTestApplication
 
         public IConfiguration Configuration { get; }
 
+        private readonly string _policyname = "CORS Policy";
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddDbContext<ApplicationDbContext>(options => options.UseMySql(Configuration.GetConnectionString("DefaultConnection"), ServerVersion.Parse("8.0.28-mysql")));
+            services.AddScoped<IAdviserRepository, AdviserRepository>();
+            services.AddControllers().AddNewtonsoftJson(x => x.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+            services.AddControllers().AddNewtonsoftJson(x => x.SerializerSettings.PreserveReferencesHandling = Newtonsoft.Json.PreserveReferencesHandling.None);
+            services.AddCors(options =>
+            {
+                options.AddPolicy(_policyname, builder =>
+                {
+                    builder.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+                });
+            });
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -45,6 +64,8 @@ namespace AgenceTestApplication
             }
 
             app.UseHttpsRedirection();
+
+            app.UseCors(_policyname);
 
             app.UseRouting();
 
