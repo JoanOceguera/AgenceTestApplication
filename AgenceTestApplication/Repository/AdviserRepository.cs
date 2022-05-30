@@ -37,20 +37,12 @@ namespace AgenceTestApplication.Repository
         public List<AdviserSummaryDto> SummaryAdvisers(List<string> advisers, DateTime begin, DateTime end)
         {
             var listAdviserSummaryDto = new List<AdviserSummaryDto>();
-            var data = _context.CaoUsuarios.Where(usuario => advisers.Contains(usuario.CoUsuario))
-                .Join(_context.CaoSalarios, usuario => usuario.CoUsuario, salario => salario.CoUsuario, (usuario, salario) => new { 
-                salario.BrutSalario,
-                usuario.CoUsuario,
-                usuario.NoUsuario})                
+            var data = _context.CaoUsuarios.Where(usuario => advisers.Contains(usuario.CoUsuario))               
                .Join(_context.CaoOs, usuario => usuario.CoUsuario, os => os.CoUsuario, (usuario, os) => new {
                 usuario.CoUsuario,
-                usuario.BrutSalario,
-                usuario.NoUsuario,
                 os.CoOs})
                .Join(_context.CaoFaturas, usuario => usuario.CoOs, fatura => fatura.CoOs, (usuario, fatura) => new {
                 usuario.CoUsuario,
-                usuario.NoUsuario,
-                usuario.BrutSalario,
                 fatura.DataEmissao,
                 fatura.Valor,
                 fatura.TotalImpInc,
@@ -61,41 +53,53 @@ namespace AgenceTestApplication.Repository
             {
                 if (adviser != null)
                 {
-                    var adviserData = data.Where(usuario => usuario.CoUsuario == adviser).OrderBy(date => date.DataEmissao).ToList();
+                    Dictionary<DateTime, float> operationsSummary = new Dictionary<DateTime, float>();
+                    Dictionary<DateTime, float> commissions = new Dictionary<DateTime, float>();
                     var adviserSummary = new AdviserSummaryDto
                     {
                         co_consultor = adviser,
-                        no_usuario = adviserData.FirstOrDefault().NoUsuario,
-                        fixed_cost = adviserData.FirstOrDefault().BrutSalario,
+                        no_usuario = _context.CaoUsuarios.Where(usuario => usuario.CoUsuario == adviser).Single().NoUsuario,
+                        operationsSummary = operationsSummary,
+                        commissions = commissions
                     };
-
-                    Dictionary<DateTime, float> operationsSummary = new Dictionary<DateTime, float>();
-                    Dictionary<DateTime, float> commissions = new Dictionary<DateTime, float>();
-                    foreach (var fatura in adviserData)
+                    var salario = _context.CaoSalarios.Where(salario => salario.CoUsuario == adviser).ToList();
+                    if (salario.Any())
                     {
-                        if (operationsSummary.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).Any())
-                        {
-                            var key = operationsSummary.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).First();
-                            operationsSummary[key] += fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100);
-                        }
-                        else
-                        {
-                            operationsSummary.Add(fatura.DataEmissao, fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100));
-                        }
-
-                        if (commissions.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).Any())
-                        {
-                            var key = commissions.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).First();
-                            commissions[key] += (fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100)) * (fatura.ComissaoCn / 100);
-                        }
-                        else
-                        {
-                            commissions.Add(fatura.DataEmissao, (fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100)) * (fatura.ComissaoCn / 100));
-                        }
+                        adviserSummary.fixed_cost = salario.First().BrutSalario;
                     }
+                    else
+                    {
+                        adviserSummary.fixed_cost = 0;
+                    }
+                    var adviserData = data.Where(usuario => usuario.CoUsuario == adviser).OrderBy(date => date.DataEmissao).ToList();
+                    if (adviserData.Any())
+                    {
+                        foreach (var fatura in adviserData)
+                        {
+                            if (operationsSummary.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).Any())
+                            {
+                                var key = operationsSummary.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).First();
+                                operationsSummary[key] += fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100);
+                            }
+                            else
+                            {
+                                operationsSummary.Add(fatura.DataEmissao, fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100));
+                            }
 
-                    adviserSummary.operationsSummary = operationsSummary;
-                    adviserSummary.commissions = commissions;
+                            if (commissions.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).Any())
+                            {
+                                var key = commissions.Keys.Where(date => date.Month == fatura.DataEmissao.Month && date.Year == fatura.DataEmissao.Year).First();
+                                commissions[key] += (fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100)) * (fatura.ComissaoCn / 100);
+                            }
+                            else
+                            {
+                                commissions.Add(fatura.DataEmissao, (fatura.Valor - fatura.Valor * (fatura.TotalImpInc / 100)) * (fatura.ComissaoCn / 100));
+                            }
+                        }
+
+                        adviserSummary.operationsSummary = operationsSummary;
+                        adviserSummary.commissions = commissions;                        
+                    }
                     listAdviserSummaryDto.Add(adviserSummary);
                 }
             }
