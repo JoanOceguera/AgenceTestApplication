@@ -24,7 +24,7 @@ namespace AgenceTestApplication.Controllers
 
         // GET: api/Adviser
         [HttpGet]
-        public ActionResult<IEnumerable<string>> GetAdvisers()
+        public ActionResult<IEnumerable<AdviserDto>> GetAdvisers()
         {
             try
             {

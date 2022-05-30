@@ -29,7 +29,7 @@ namespace AgenceTestApplication.Repository
             var advisers = new List<AdviserDto>();
             foreach (var adviser in advisersList)
             {
-                advisers.Add(new AdviserDto() { CoUsuario = adviser.CoUsuario, NoUsuario = adviser.NoUsuario});
+                advisers.Add(new AdviserDto() { coUsuario = adviser.CoUsuario, noUsuario = adviser.NoUsuario});
             }
             return advisers;
         }

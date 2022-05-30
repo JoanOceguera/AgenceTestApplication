@@ -7,8 +7,8 @@ namespace AgenceTestApplication.Models.Dto
 {
     public class AdviserDto
     {
-        public string CoUsuario { get; set; }
+        public string coUsuario { get; set; }
 
-        public string NoUsuario { get; set; }
+        public string noUsuario { get; set; }
     }
 }
